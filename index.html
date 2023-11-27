@@ -1,0 +1,673 @@
+{% extends '_Master.html' %}
+{% block title_tab %} Be part of the game {% endblock %}
+{% load static %}
+
+{% block main_content %}
+
+<!-- Adsvertise-->
+<div class="ads-box">
+  <img src="{% static 'img/Ad 728px - 90px.png' %}" alt="" width="728px">
+</div>
+
+<!-- Content -->
+<div class="main-content wrapper">
+
+  <!-- Left Side Bar -->
+  <div class="leftbar">
+    <div class="box-content">
+      <p>Filter Date</p>
+      <div class="leagues-main-wrapper2">
+
+
+        
+        <div class="leagues-name2">
+          <a href="/league/1/" class="cursor-pointer">
+            <div display="flex" class="leagues-country-t">
+              <i class="fa-solid fa-calendar fa-bounce" style="color: var(--brand-color);"></i>
+              <div><span>Yesterday Matches</span></div>
+            </div>
+          </a>
+        </div>
+        
+        <div class="leagues-name2">
+          <a href="/league/5/" class="cursor-pointer">
+            <div display="flex" class="leagues-country-t">
+              <i class="fa-solid fa-calendar fa-bounce" style="color: var(--brand-color);"></i>
+              <div><span>Today Matches</span></div>
+            </div>
+          </a>
+        </div>
+        
+        <div class="leagues-name2">
+          <a href="/league/3/" class="cursor-pointer">
+            <div display="flex" class="leagues-country-t">
+              <i class="fa-solid fa-calendar fa-bounce" style="color: var(--brand-color);"></i>
+              <div><span>Tomorrow Matches</span></div>
+            </div>
+          </a>
+        </div>
+        
+        
+        
+      </div>
+    </div>
+
+    
+  </div>
+
+  <!-- Mid Side Bar -->
+  <div class="mainbar">
+    <div id="display-today-matches match-list">
+      <div class="box-content">
+        <div class="filter-bar" style="justify-content: space-between;">
+          <div class="filter-bar" style="justify-content: center;">
+            <p style="font-size: 20px;">TODAY MATCHES</p>
+          </div>
+          <div class="button-filter-content">
+            <button class="btn-filter-content active" onclick="redirect3()">ALL</button>
+            <!-- <button class="btn-filter-content">NOT STARTED<span class="btn__label bg-danger" id="livescore-number">2</span></button> -->
+            <button class="btn-filter-content" onclick="redirect2()" >FAVORITES</button>
+          </div>
+        </div>
+
+         <div class="filter-bar" style="justify-content: flex-start;padding: 5px 12px 5px 12px;margin: 6px 10px;background: linear-gradient(to right, #e2e2e2, var(--light-brand-color))!important;border-radius: 8px;">
+          <div class="button-filter-content" style="">
+            <button class="btn-filter-content active" id="handicap-button" style="background: var(--white-color);">Handicap</button>
+            <button class="btn-filter-content" id="over-under-button" style="background: var(--white-color);">Over/Under</button>
+          </div>
+        </div>
+        <div id="handicap-section">
+          <!-- Handicap -->
+          {% for match in matches %}
+            <div class="leagues-wrapper">
+              <div class="leagues-wrapper-header">
+                <div class="leagues-wrapper-header-l">
+                  <div class="leagues-wrapper-header-l-r">
+                    <div class="leagues-wrapper-header-l-r-b"><a href="" class="pd-0">{{ match.league }}</a></div>
+                  </div>
+                </div>
+                <div class="leagues-wrapper-header-r flex-combo" style="margin-right: 16px;">
+                  <span>HDP</span>
+                </div>
+              </div>
+              <div class="leagues-wrapper-content d-flex a-item">
+                
+                <div class="teams-wrapper flex-basic">
+                  <div class="team-wrapper flex-basic">
+
+                      <span class="favorite-star" data-match-id="{{ match.id }}" onclick="toggleFavoriteMatch(this)" data-toggle="tooltip" data-placement="top" title="Add to Favorite">
+                        {% if match.id|stringformat:"s" in favorite_matches %}<span style="color: var(--yellow-color);">★</span>{% else %}☆{% endif %}
+                      </span>
+                      <div class="teams-stats flex-combo">
+                        <span class="teams-start-time">
+                          {% if match.display_status == "LIVE" %}
+                            <div class="teams-stats flex-combo">
+                              <span class="teams-start-time" style="color: red;font-weight: 600;">
+                                LIVE
+                                <i class="fa-regular fa-futbol fa-spin" style="margin: 5px;"></i>
+                              </span>  
+                            </div>
+                          {% elif match.display_status != "Finished" %}
+                            <div class="teams-stats flex-combo">
+                              <span class="teams-start-time" style="color: var(--bs-primary);font-weight: 600;">
+                                {{ match.display_status }}
+                              </span>
+                            </div>
+                          {% else %}
+                            Finished
+                          {% endif %}
+                        </span>
+                      </div>
+                  </div>
+                  <div class="teams-link flex-basic" data-toggle="tooltip" data-placement="top" title="Click to See Match Detail!">
+                    <a href="">
+                      <div class="teams-home d-flex">
+                        <div class="teams-name">{{ match.home_team }}</div>
+                      </div>
+                      <div class="teams-away d-flex">
+                        <div class="teams-name">{{ match.away_team }}</div>
+                      </div>
+                      {% comment %} <div class="teams-away d-flex">
+                        <div class="teams-name" style="color: var(--bs-dark-border-subtle);">Draw</div>
+                      </div> {% endcomment %}
+                    </a>
+                  </div>
+                  {% if 's_user' in request.session %}
+                    {% if not match.is_prediction_closed %}
+                      {% if match.pk in prediction_results_HDP %}
+                        {% for prediction in predicted_matches_HDP %}
+                          {% if prediction.match == match %}
+                            <!-- Hiển thị dự đoán của người dùng -->
+                            <button type="button" class="predicted_button" data-bs-toggle="modal" data-bs-target="#check{{ match.id }}" style="position: relative;left: -10px;">
+                              {{ prediction.predict_choice }} {{ prediction.predicted }}
+                            </button>
+                            <button type="button" data-toggle="tooltip" data-placement="top" title="Remove Prediction" class="cancel-prediction-button" data-bs-toggle="modal" data-bs-target="#delete{{ match.id }}">
+                              <i class="fa-solid fa-trash-can" style="color: #623e8e;padding: 10px 0!important;margin: 0!important;"></i>
+                            </button>
+                            <!-- Modal Check % Prediction -->
+                            <div class="modal modal-sm fade" id="check{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                              <div class="modal-dialog">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <i class="fa-solid fa-braille"></i>
+                                    <h5 class="modal-title" id="exampleModalLabel">Prediction Overview:</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <div class="modal-body" style="background: var(--black-color);color: white;">
+                                    <span style="color: var(--white-color);font-weight: 600;background: var(--black-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                      Home {{ match.handicap_H }}
+                                    </span><span style="color: var(--white-color);font-weight: 600;background: rgba(123, 97, 255, {{match.buy_home_decimal}});padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">{{match.buy_home_percentage }}%</span><br><br><span style="color: var(--white-color);font-weight: 600;background: var(--black-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                      Away {{ match.handicap_A }}
+                                    </span><span style="color: var(--white-color);font-weight: 600;background: rgba(123, 97, 255, {{match.buy_away_decimal}});padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">{{match.buy_away_percentage }}%</span></div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Modal Delete -->
+                            <form method="post" action="/delete_prediction_HDP/{{ prediction.id }}/">
+                              {% csrf_token %}
+                              <div class="modal modal-sm fade" id="delete{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <i class="fa-solid fa-braille"></i>
+                                      <h5 class="modal-title" id="exampleModalLabel">Are you sure?</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body" style="background: var(--bs-danger);color: white;">
+                                        Do you really want to delete Your HDP Prediction of this match? 
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                      <button type="submit" class="btn btn-danger">Yes</button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          {% endif %}
+                        {% endfor %}
+                        
+
+                      {% else %}            
+                        <!-- Hiển thị các nút dự đoán -->
+                        <div>
+                          <div class="teams-info">
+                              <input type="hidden" name="match_id" value="{{ match.id }}">
+                              <input type="hidden" name="prediction" value="Home">
+                                  <button type="button" class="prediction-button" data-bs-toggle="modal" data-bs-target="#matchhome{{ match.id }}">
+                                    <span class="prediction-text">H {{ match.handicap_H }}</span>
+                                  </button>
+                          </div>
+                          <div class="teams-info">
+                              <input type="hidden" name="match_id" value="{{ match.id }}">
+                              <input type="hidden" name="prediction" value="Away">
+                                <button type="button" class="prediction-button" data-bs-toggle="modal" data-bs-target="#matchaway{{ match.id }}"> 
+                                  <span class="prediction-text">A {{ match.handicap_A }}</span>
+                                </button>
+                          </div>
+                        </div>
+                        <!-- Modal Home -->
+                        <form method="post" action="/save_prediction_HDP/">
+                          {% csrf_token %}
+                          <div class="modal modal-sm fade" id="matchhome{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <i class="fa-solid fa-braille"></i>
+                                  <h5 class="modal-title" id="exampleModalLabel">Are you sure?</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" style="background: var(--black-color);color: white;">
+                                    <input type="hidden" name="match_id" value="{{ match.id }}">
+                                    <input type="hidden" name="predict_type" value="HDP">
+                                    <input type="hidden" name="predict_choice" value="H">
+                                    <input type="hidden" name="prediction" value="{{ match.handicap_H }}">
+                                    <input type="hidden" name="predict_odds" value="{{ match.home_odds }}">
+                                    {{ match.kickoff_time|date:"d M H:i" }}<br>
+                                    [{{ match.league }}]<br>
+                                    {{ match.home_team }} -vs- {{ match.away_team }}<br><br>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--brand-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                    Home {{ match.handicap_H }}
+                                  </span>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--bs-dark-border-subtle);padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">
+                                    {{match.home_odds}}
+                                  </span><br><br>
+                                  Win : <span style="color: var(--green-color);">+{{match.calculate_results.home_odds_results.win|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Win half : <span style="color: var(--green-color);">+{{match.calculate_results.home_odds_results.win_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.home_odds_results.lose|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose half : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.home_odds_results.lose_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                  <button type="submit" class="btn btn-primary" style="background: var(--brand-color);border: 1px solid var(--brand-color);">Placed Prediction</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                        <!-- Modal Away -->
+                        <form method="post" action="/save_prediction_HDP/">
+                          {% csrf_token %}
+                          <div class="modal modal-sm fade" id="matchaway{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <i class="fa-solid fa-braille"></i>
+                                  <h5 class="modal-title" id="exampleModalLabel">Are you sure?</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" style="background: var(--black-color);color: white;">
+                                    <input type="hidden" name="match_id" value="{{ match.id }}">
+                                    <input type="hidden" name="predict_type" value="HDP">
+                                    <input type="hidden" name="predict_choice" value="A">
+                                    <input type="hidden" name="prediction" value="{{ match.handicap_A }}">
+                                    <input type="hidden" name="predict_odds" value="{{ match.away_odds }}">
+                                    {{ match.kickoff_time|date:"d M H:i" }}<br>
+                                    [{{ match.league }}]<br>
+                                    {{ match.home_team }} -vs- {{ match.away_team }}<br><br>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--brand-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                    Away {{ match.handicap_A }}
+                                  </span>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--bs-dark-border-subtle);padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">
+                                    {{match.away_odds}}
+                                  </span><br><br>
+                                  Win : <span style="color: var(--green-color);">+{{match.calculate_results.away_odds_results.win|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Win half : <span style="color: var(--green-color);">+{{match.calculate_results.away_odds_results.win_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.away_odds_results.lose|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose half : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.away_odds_results.lose_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                  <button type="submit" class="btn btn-primary" style="background: var(--brand-color);border: 1px solid var(--brand-color);">Placed Prediction</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                        <div style="margin-left: 25px;"></div>
+                      {% endif %}
+                    {% elif match.is_prediction_closed %}
+                      <span class="predict-closed-note"><img src="{% static 'img/closed.webp' %}" style="width: 55px;position: relative;right: -20px;"></span>
+                    {% endif %}
+                  {% else %}
+                    <button class="redirect_sign_in" onclick="redirect1()" style="background: transparent;border: none;color: var(--bs-blue);">
+                      Please Sign In to Continue
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div id="over-under-section" style="display: none;">
+          <!-- Over/Under -->
+          {% for match in matches %}
+            <div class="leagues-wrapper">
+              <div class="leagues-wrapper-header">
+                <div class="leagues-wrapper-header-l">
+                  <div class="leagues-wrapper-header-l-r">
+                    <div class="leagues-wrapper-header-l-r-b"><a href="" class="pd-0">{{ match.league }}</a></div>
+                  </div>
+                </div>
+                <div class="leagues-wrapper-header-r flex-combo" style="margin-right: 16px;">
+                  <span>OU</span>
+                </div>
+              </div>
+              <div class="leagues-wrapper-content d-flex a-item">
+                
+                <div class="teams-wrapper flex-basic">
+                  <div class="team-wrapper flex-basic">
+
+                      <span class="favorite-star" data-match-id="{{ match.id }}" onclick="toggleFavoriteMatch(this)" data-toggle="tooltip" data-placement="top" title="Add to Favorite">
+                        {% if match.id|stringformat:"s" in favorite_matches %}<span style="color: var(--yellow-color);">★</span>{% else %}☆{% endif %}
+                      </span>
+                      <div class="teams-stats flex-combo">
+                        <span class="teams-start-time">
+                          {% if match.display_status == "LIVE" %}
+                            <div class="teams-stats flex-combo">
+                              <span class="teams-start-time" style="color: red;font-weight: 600;">
+                                LIVE
+                                <i class="fa-regular fa-futbol fa-spin" style="margin: 5px;"></i>
+                              </span>  
+                            </div>
+                          {% elif match.display_status != "Finished" %}
+                            <div class="teams-stats flex-combo">
+                              <span class="teams-start-time" style="color: var(--bs-primary);font-weight: 600;">
+                                {{ match.display_status }}
+                              </span>
+                            </div>
+                          {% else %}
+                            Finished
+                          {% endif %}
+                        </span>
+                      </div>
+                  </div>
+                  <div class="teams-link flex-basic" data-toggle="tooltip" data-placement="top" title="Click to See Match Detail!">
+                    <a href="">
+                      <div class="teams-home d-flex">
+                        <div class="teams-name">{{ match.home_team }}</div>
+                      </div>
+                      <div class="teams-away d-flex">
+                        <div class="teams-name">{{ match.away_team }}</div>
+                      </div>
+                    </a>
+                  </div>
+                  {% if 's_user' in request.session %}
+                    {% if not match.is_prediction_closed %}
+                      {% if match.pk in prediction_results_OU %}
+                        {% for prediction in predicted_matches_OU %}
+                          {% if prediction.match == match  %}
+                            <!-- Hiển thị dự đoán của người dùng -->
+                            <button type="button" class="predicted_button" data-bs-toggle="modal" data-bs-target="#check2{{ match.id }}" style="position: relative;left: -10px;">
+                              {{ prediction.predict_choice }} {{ prediction.predicted }}
+                            </button>
+                            <button type="button" data-toggle="tooltip" data-placement="top" title="Remove Prediction" class="cancel-prediction-button" data-bs-toggle="modal" data-bs-target="#delete2{{ match.id }}">
+                              <i class="fa-solid fa-trash-can" style="color: #623e8e;padding: 10px 0!important;margin: 0!important;"></i>
+                            </button>
+                            <!-- Modal Check % Prediction -->
+                            <div class="modal modal-sm fade" id="check2{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                              <div class="modal-dialog">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <i class="fa-solid fa-braille"></i>
+                                    <h5 class="modal-title" id="exampleModalLabel">Prediction Overview:</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <div class="modal-body" style="background: var(--black-color);color: white;">
+                                    <span style="color: var(--white-color);font-weight: 600;background: var(--black-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                      Over {{ match.ou_O }}
+                                    </span><span style="color: var(--white-color);font-weight: 600;background: rgba(123, 97, 255, {{match.buy_over_decimal}});padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">{{match.buy_over_percentage }}%</span><br><br><span style="color: var(--white-color);font-weight: 600;background: var(--black-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                      Under {{ match.ou_U }}
+                                    </span><span style="color: var(--white-color);font-weight: 600;background: rgba(123, 97, 255, {{match.buy_under_decimal}});padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">{{match.buy_under_percentage }}%</span></div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <!-- Modal Delete -->
+                            <form method="post" action="/delete_prediction_OU/{{ prediction.id }}/">
+                              {% csrf_token %}
+                              <div class="modal modal-sm fade" id="delete2{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <i class="fa-solid fa-braille"></i>
+                                      <h5 class="modal-title" id="exampleModalLabel">Are you sure?</h5>
+                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body" style="background: var(--bs-danger);color: white;">
+                                        Do you really want to delete Your HDP Prediction of this match? 
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                      <button type="submit" class="btn btn-danger">Yes</button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          {% endif %}
+                        {% endfor %}
+                      {% else %}            
+                        <!-- Hiển thị các nút dự đoán -->
+                        <div>
+                          <div class="teams-info">
+                              <input type="hidden" name="match_id" value="{{ match.id }}">
+                              <input type="hidden" name="prediction" value="Over">
+                                  <button type="button" class="prediction-button" data-bs-toggle="modal" data-bs-target="#matchover{{ match.id }}">
+                                    <span class="prediction-text">O {{ match.ou_O }}</span>
+                                  </button>
+                          </div>
+                          <div class="teams-info">
+                              <input type="hidden" name="match_id" value="{{ match.id }}">
+                              <input type="hidden" name="prediction" value="Under">
+                                <button type="button" class="prediction-button" data-bs-toggle="modal" data-bs-target="#matchunder{{ match.id }}"> 
+                                  <span class="prediction-text">U {{ match.ou_U }}</span>
+                                </button>
+                          </div>
+                        </div>
+                        <!-- Modal Over -->
+                        <form method="post" action="/save_prediction_OU/">
+                          {% csrf_token %}
+                          <div class="modal modal-sm fade" id="matchover{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <i class="fa-solid fa-braille"></i>
+                                  <h5 class="modal-title" id="exampleModalLabel">Are you sure?</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" style="background: var(--black-color);color: white;">
+                                    <input type="hidden" name="match_id" value="{{ match.id }}">
+                                    <input type="hidden" name="predict_type" value="OU">
+                                    <input type="hidden" name="predict_choice" value="O">
+                                    <input type="hidden" name="prediction" value="{{ match.ou_O }}">
+                                    <input type="hidden" name="predict_odds" value="{{ match.over_odds }}">
+                                    {{ match.kickoff_time|date:"d M H:i" }}<br>
+                                    [{{ match.league }}]<br>
+                                    {{ match.home_team }} -vs- {{ match.away_team }}<br><br>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--brand-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                    Over {{ match.ou_O }}
+                                  </span>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--bs-dark-border-subtle);padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">
+                                    {{match.over_odds}}
+                                  </span><br><br>
+                                  Win : <span style="color: var(--green-color);">+{{match.calculate_results.over_odds_results.win|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Win half : <span style="color: var(--green-color);">+{{match.calculate_results.over_odds_results.win_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.over_odds_results.lose|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose half : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.over_odds_results.lose_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                  <button type="submit" class="btn btn-primary" style="background: var(--brand-color);border: 1px solid var(--brand-color);">Placed Prediction</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                        <!-- Modal Under -->
+                        <form method="post" action="/save_prediction_OU/">
+                          {% csrf_token %}
+                          <div class="modal modal-sm fade" id="matchunder{{ match.id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <i class="fa-solid fa-braille"></i>
+                                  <h5 class="modal-title" id="exampleModalLabel">Are you sure?</h5>
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" style="background: var(--black-color);color: white;">
+                                    <input type="hidden" name="match_id" value="{{ match.id }}">
+                                    <input type="hidden" name="predict_type" value="OU">
+                                    <input type="hidden" name="predict_choice" value="U">
+                                    <input type="hidden" name="prediction" value="{{ match.ou_U }}">
+                                    <input type="hidden" name="predict_odds" value="{{ match.under_odds }}">
+                                    {{ match.kickoff_time|date:"d M H:i" }}<br>
+                                    [{{ match.league }}]<br>
+                                    {{ match.home_team }} -vs- {{ match.away_team }}<br><br>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--brand-color);padding: 5px;border-radius: 10px; margin: 2px 5px 0 0;">
+                                    Under {{ match.ou_U }}
+                                  </span>
+                                  <span style="color: var(--white-color);font-weight: 600;background: var(--bs-dark-border-subtle);padding: 5px;border-radius: 10px;margin: 2px 5px 0 0;">
+                                    {{match.away_odds}}
+                                  </span><br><br>
+                                  Win : <span style="color: var(--green-color);">+{{match.calculate_results.under_odds_results.win|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Win half : <span style="color: var(--green-color);">+{{match.calculate_results.under_odds_results.win_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.under_odds_results.lose|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+                                  Lose half : <span style="color: var(--bs-danger);font-weight: 600;"> {{match.calculate_results.under_odds_results.lose_half|floatformat:2}}</span><i class="fa-solid fa-coins" style="color: #ffde28;"></i><br>
+
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                                  <button type="submit" class="btn btn-primary" style="background: var(--brand-color);border: 1px solid var(--brand-color);">Placed Prediction</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </form>
+                        <div style="margin-left: 25px;"></div>
+                      {% endif %}
+                    {% elif match.is_prediction_closed %}
+                      <span class="predict-closed-note"><img src="{% static 'img/closed.webp' %}" style="width: 55px;position: relative;right: -20px;"></span>
+                    {% endif %}
+                  {% else %}
+                    <button class="redirect_sign_in" onclick="redirect1()" style="background: transparent;border: none;color: var(--bs-blue);">
+                      Please Sign In to Continue
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <!--Show More Button-->
+        <!-- <div class="title-general-view-more flex-combo">
+          <div class="title-general-view-more-in" data="1" id="loading_more load-more">
+            Show All Matches <i class="fa-solid fa-chevron-down fa-bounce"></i>
+          </div>
+          <div class="title-general-view-more-in d-none" data="1" id="spinner_loading_more"> 
+          </div>
+          <div class="spinner-3" id="spinner_3_animation"></div>
+        </div> -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side Bar -->
+  <div class="rightbar">
+    <!--Featured match-->
+    <div class="box-content-2">
+      <p>Most Predict Matches (3)</p>
+      <div class="box-color">
+        <div id="carouselExampleDark" class="carousel carousel-dark slide" data-bs-ride="carousel">
+          <div class="carousel-indicators">
+            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active"
+              aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1"
+              aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2"
+              aria-label="Slide 3"></button>
+          </div>
+          <div class="carousel-inner">
+            <div class="carousel-item active" data-bs-interval="10000">
+              <div class="who-will-win-match t-center">
+                <div class="who-will-win-match__breadcrumbs"><a href="" class=""> Football </a> / <a href="" class="">
+                    {{ upcoming_matches.0.league }} </a>
+                </div>
+                <a href="head2head.html" class="who-will-win-match__match d-flex align-center">
+                  <div class="who-will-win-match__match__team">
+                    <div class="ww-adjust">
+                      <span class="who-will-win-match__match__name"> {{ upcoming_matches.0.home_team }} </span>
+                    </div>
+                  </div>
+                  <small class="who-will-win-match__match__date">
+                    <span class="span-ko-time"> {{ upcoming_matches.0.kickoff_time|date:"H:i" }} </span> {{ upcoming_matches.0.kickoff_time|date:"d N Y" }}
+                  </small>
+                  <div class="who-will-win-match__match__team">
+                    <div class="ww-adjust">
+                      <span class="who-will-win-match__match__name"> {{ upcoming_matches.0.away_team }} </span>
+                    </div>
+                  </div>
+                </a>
+
+              </div>
+            </div>
+            <div class="carousel-item" data-bs-interval="2000">
+              <div class="who-will-win-match t-center">
+                <div class="who-will-win-match__breadcrumbs"><a href="" class=""> Football </a> / <a href="" class="">
+                  {{ upcoming_matches1.league }} </a>
+                </div>
+                <a href="head2head.html" class="who-will-win-match__match d-flex align-center">
+                  <div class="who-will-win-match__match__team">
+                    <div class="ww-adjust">
+                      <span class="who-will-win-match__match__name"> {{ upcoming_matches1.home_team }} </span>
+                    </div>
+                  </div>
+                  <small class="who-will-win-match__match__date">
+                    <span class="span-ko-time"> {{ upcoming_matches1.kickoff_time|date:"H:i" }} </span> {{ upcoming_matches1.kickoff_time|date:"d N Y" }}
+                  </small>
+                  <div class="who-will-win-match__match__team">
+                    <div class="ww-adjust">
+                      <span class="who-will-win-match__match__name"> {{ upcoming_matches1.away_team }} </span>
+                    </div>
+                  </div>
+                </a>
+
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div class="who-will-win-match t-center">
+                <div class="who-will-win-match__breadcrumbs"><a href="" class=""> Football </a> / <a href="" class="">
+                  {{ upcoming_matches2.0.league }} </a>
+                </div>
+                <a href="head2head.html" class="who-will-win-match__match d-flex align-center">
+                  <div class="who-will-win-match__match__team">
+                    <div class="ww-adjust">
+                      <img alt="{{ upcoming_matches2.0.home_team.name }}" width="40" height="40" src="{{ upcoming_matches2.0.home_team.logo.url }}">
+                      <span class="who-will-win-match__match__name"> {{ upcoming_matches2.0.home_team.name }} </span>
+                    </div>
+                  </div>
+                  <small class="who-will-win-match__match__date">
+                    <span class="span-ko-time"> {{ upcoming_matches2.0.kickoff_time|date:"H:i" }} </span> {{ upcoming_matches2.0.kickoff_time|date:"d N Y" }}
+                  </small>
+                  <div class="who-will-win-match__match__team">
+                    <div class="ww-adjust">
+                      <img alt="{{ upcoming_matches2.0.away_team.name }}" width="40" height="40" src="{{ upcoming_matches2.0.away_team.logo.url }}">
+                      <span class="who-will-win-match__match__name"> {{ upcoming_matches1.0.away_team.name }} </span>
+                    </div>
+                  </div>
+                </a>
+
+              </div>
+            </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark"
+            data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark"
+            data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!--Standing Widgets-->
+    <div class="box-content-3">
+      <div class="box-color">
+        <iframe frameborder="0" scrolling="yes" height="760" id="fs-69002"
+          src="https://www.fastscore.com/widgets/standings/27581/69002?ff=3&amp;fs=14&amp;lh=26&amp;bg=F5F5F9&amp;fc=212529&amp;tfc=7B61FF&amp;ifc=D2C9FF&amp;lbc=DEE2E6&amp;sbr=false&amp;sci=true&amp;sha=true&amp;stl=false&amp;slc=true&amp;tlg=true&amp;tlk=false&amp;mp=true&amp;mw=false&amp;md=false&amp;ml=false&amp;gl=false&amp;gd=true&amp;f=false"
+          style="width: 100%;height: 814px;"></iframe>
+      </div>
+    </div>
+
+    <!--Ads Right Bar-->
+    <div class="ads-rightbar flex-combo">
+      <img src="{% static 'img/Ad 250px - 250px.png' %}" alt="Adsvertise" width="250px">
+    </div>
+
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block today_matches %}
+    <h3>Today Matches</h3>
+    {% for match in upcoming_matches_today %}
+        <a href="">{{ match.home_team.name }} -vs- {{ match.away_team.name }}</a>
+    {% endfor %}
+{% endblock %}
+
+
